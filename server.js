@@ -6,7 +6,7 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-app.listen(power, () => {
+app.listen(port, () => {
     console.log(`App is listening on port ${port}`);
 });
 
