@@ -1,52 +1,89 @@
-(function () {
+(function() {
+    // gets parameters from the hash of the URL return object
     function getHashParams() {
-        var hashParams = {};
-        var e,
-          r = /([^&;=]+)=?([^&;]*)/g,
+      var hashParams = {};
+      var e, r = /([^&;=]+)=?([^&;]*)/g,
           q = window.location.hash.substring(1);
-        while ((e = r.exec(q))) {
-          hashParams[e[1]] = decodeURIComponent(e[2]);
-        }
-        return hashParams;
+      
+          while(e = r.exec(q)) {
+         hashParams[e[1]] = decodeURIComponent(e[2]);
+      }
+      
+      return hashParams;
     }
 
-    // function getArtists() {
-    //     $.ajax({
-    //         url: `https://api.spotify.com/v1/me/top/artists?limit=5&time_range=short_term`,
-    //         header: {
-    //             Authorization: "Bearer " + access_token,
-    //         },
-    //         success: function(response) {
-    //             console.log(response.items);
-    //         },
-    //         error: function(response) {
-    //             console.log(access_token);
-    //             console.log("call failed");
-    //         },
-    //     });
-    // }
+    // get top 5 artists
+    function getArtists() {
+        $.ajax({
+            url: `https://api.spotify.com/v1/me/top/artists?limit=10`,
+            headers: {
+                Authorization: 'Bearer ' + access_token
+            },
+            success: function(response) {
+                console.log(response.items);
+            },
+        });
+    }
 
+    var userProfileSource = document.getElementById('user-profile-template').innerHTML,
+        userProfileTemplate = Handlebars.compile(userProfileSource),
+        userProfilePlaceholder = document.getElementById('user-profile');
+
+    var oauthSource = document.getElementById('oauth-template').innerHTML,
+        oauthTemplate = Handlebars.compile(oauthSource),
+        oauthPlaceholder = document.getElementById('oauth');
+
+    // this gets values from the url, you can see them at the top!
     let params = getHashParams();
     let access_token = params.access_token,
-        dev_token = params.dev_token,
-        client = params.client,
+        refresh_token = params.refresh_token,
         error = params.error;
 
-    if(error) {
-        alert("there was an error during authentication");
-    }
+    if (error) {
+      alert('There was an error during the authentication');
+    } 
     else {
-        if(client === "spotify" && access_token) {
-            console.log("verified");
-        }
-    }
+        if (access_token) {
+            // render oauth info
+            oauthPlaceholder.innerHTML = oauthTemplate({
+            access_token: access_token,
+            refresh_token: refresh_token
+            });
 
-    // document.getElementById("get_artists").addEventListener(
-    //     "click",
-    //     function() {
-    //         console.log("button clicked");
-    //         getArtists();
-    //     },
-    //     false
-    // );
+            // spotify profile info call
+            $.ajax({
+            url: 'https://api.spotify.com/v1/me',
+            headers: {
+                Authorization: 'Bearer ' + access_token
+            },
+            success: function(response) {
+                userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+                $('#login').hide();
+                $('#loggedin').show();
+            }
+            });
+        } 
+        else {
+            $('#login').show();
+            $('#loggedin').hide();
+        }
+
+        document.getElementById('obtain-new-token').addEventListener('click', function() {
+            $.ajax({
+                url: '/refresh_token',
+                data: {
+                    'refresh_token': refresh_token
+                }
+            }).done(function(data) {
+            access_token = data.access_token;
+            oauthPlaceholder.innerHTML = oauthTemplate({
+                access_token: access_token,
+                refresh_token: refresh_token
+            });
+            });}, false);
+        
+        document.getElementById('get_artists').addEventListener('click', function() {
+            getArtists();
+        });
+    }
 })();
