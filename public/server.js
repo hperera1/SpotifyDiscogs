@@ -13,14 +13,22 @@
     }
 
     // get top 5 artists
-    function getArtists() {
+    function getTracks() {
         $.ajax({
-            url: `https://api.spotify.com/v1/me/top/artists?limit=10`,
+            url: `https://api.spotify.com/v1/me/top/tracks?limit=10`,
             headers: {
                 Authorization: 'Bearer ' + access_token
             },
             success: function(response) {
-                console.log(response.items);
+                let data = {
+                    tracks: response.items,
+                    json: true,
+                };
+                console.log(data);
+
+                for(var i = 0; i < data.tracks.length; i++) {
+                    console.log(data.tracks[i].name + " | " + data.tracks[i].album.name );
+                }
             },
         });
     }
@@ -82,8 +90,8 @@
             });
             });}, false);
         
-        document.getElementById('get_artists').addEventListener('click', function() {
-            getArtists();
+        document.getElementById('get_tracks').addEventListener('click', function() {
+            getTracks();
         });
     }
 })();
